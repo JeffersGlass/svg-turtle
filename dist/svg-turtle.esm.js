@@ -1,19 +1,15 @@
 //----------------------------------------------------------------------------//
-/**** throwableError - simplifies construction of named errors ****/
-function throwableError(Message) {
+/**** throwError - simplifies construction of named errors ****/
+function throwError(Message) {
     var Match = /^([$a-zA-Z][$a-zA-Z0-9]*):\s*(\S.+)\s*$/.exec(Message);
     if (Match == null) {
-        return new Error(Message);
+        throw new Error(Message);
     }
     else {
         var namedError = new Error(Match[2]);
         namedError.name = Match[1];
-        return namedError;
+        throw namedError;
     }
-}
-/**** throwError - throws a named error ****/
-function throwError(Message) {
-    throw throwableError(Message);
 }
 /**** ValueIsNumber ****/
 function ValueIsNumber(Value) {
@@ -86,7 +82,7 @@ function validatedArgument(Description, Argument, ValueIsValid, NilIsAcceptable,
             return Argument;
         }
         else {
-            throwError("MissingArgument: no " + escaped(Description) + " given");
+            throwError("MissingArgument: no ".concat(escaped(Description), " given"));
         }
     }
     else {
@@ -101,7 +97,7 @@ function validatedArgument(Description, Argument, ValueIsValid, NilIsAcceptable,
             }
         }
         else {
-            throwError("InvalidArgument: the given " + escaped(Description) + " is no valid " + escaped(Expectation));
+            throwError("InvalidArgument: the given ".concat(escaped(Description), " is no valid ").concat(escaped(Expectation)));
         }
     }
 }
@@ -161,7 +157,7 @@ function allowOneOf(Description, Argument, ValueList) {
 /**** expect[ed]OneOf ****/
 function expectOneOf(Description, Argument, ValueList) {
     if (Argument == null) {
-        throwError("MissingArgument: no " + escaped(Description) + " given");
+        throwError("MissingArgument: no ".concat(escaped(Description), " given"));
     }
     if (ValueIsOneOf(Argument, ValueList)) {
         return ( // unboxes any primitives
@@ -170,7 +166,7 @@ function expectOneOf(Description, Argument, ValueList) {
             : Argument.valueOf());
     }
     else {
-        throwError("InvalidArgument: the given " + escaped(Description) + " is not among the supported values");
+        throwError("InvalidArgument: the given ".concat(escaped(Description), " is not among the supported values"));
     }
 }
 var expectedOneOf = expectOneOf;
@@ -328,6 +324,7 @@ var Graphic = /** @class */ (function () {
         this.currentDirection = 0;
         this.currentWidth = 1;
         this.currentColor = '#000000';
+        this.currentOpacity = 1;
         this.currentLineature = 'solid';
         this.currentJoin = 'round';
         this.currentCap = 'round';
@@ -349,6 +346,9 @@ var Graphic = /** @class */ (function () {
         if (this.currentColor == null) {
             this.currentColor = '#000000';
         }
+        if (this.currentOpacity == null) {
+            this.currentOpacity = 1;
+        }
         if (this.currentLineature == null) {
             this.currentLineature = 'solid';
         }
@@ -366,6 +366,7 @@ var Graphic = /** @class */ (function () {
         this.currentDirection = 0;
         this.currentWidth = 1;
         this.currentColor = '#000000';
+        this.currentOpacity = 1;
         this.currentLineature = 'solid';
         this.currentJoin = 'round';
         this.currentCap = 'round';
@@ -394,6 +395,9 @@ var Graphic = /** @class */ (function () {
             if (PathOptionSet.Color != null) {
                 this.currentColor = PathOptionSet.Color;
             }
+            if (PathOptionSet.Opacity != null) {
+                this.currentOpacity = PathOptionSet.Opacity;
+            }
             if (PathOptionSet.Lineature != null) {
                 this.currentLineature = PathOptionSet.Lineature;
             }
@@ -411,6 +415,7 @@ var Graphic = /** @class */ (function () {
         this.currentPath = '<path ' +
             'fill="none" ' +
             'stroke="' + this.currentColor + '" ' +
+            'stroke-opacity="' + this.currentOpacity + '" ' +
             'stroke-width="' + this.currentWidth + '" ' +
             'stroke-linejoin="' + this.currentJoin + '" ' +
             'stroke-linecap="' + this.currentCap + '" ';
@@ -432,7 +437,7 @@ var Graphic = /** @class */ (function () {
     /**** turn ****/
     Graphic.prototype.turn = function (DirectionChange) {
         expectFiniteNumber('direction change', DirectionChange);
-        this.currentDirection += DirectionChange;
+        this.currentDirection += -1 * DirectionChange;
         return this;
     };
     /**** turnTo ****/
@@ -444,14 +449,25 @@ var Graphic = /** @class */ (function () {
     /**** turnLeft ****/
     Graphic.prototype.turnLeft = function (DirectionChange) {
         expectFiniteNumber('direction change', DirectionChange);
-        this.currentDirection -= DirectionChange;
+        this.currentDirection -= -1 * DirectionChange;
         return this;
+    };
+    Graphic.prototype.foo = function () {
+        console.log("FOO");
+    };
+    /**** ****/
+    Graphic.prototype.left = function (DirectionChange) {
+        return this.turnLeft(-1 * DirectionChange);
     };
     /**** turnRight ****/
     Graphic.prototype.turnRight = function (DirectionChange) {
         expectFiniteNumber('direction change', DirectionChange);
         this.currentDirection += DirectionChange;
         return this;
+    };
+    /*** ****/
+    Graphic.prototype.right = function (DirectionChange) {
+        return this.turnRight(-1 * DirectionChange);
     };
     /**** move ****/
     Graphic.prototype.move = function (Distance) {
@@ -460,6 +476,14 @@ var Graphic = /** @class */ (function () {
         this.moveTo(// DRY approach
         (this.currentX || 0) + Distance * Math.cos(DirectionInRadians), (this.currentY || 0) + Distance * Math.sin(DirectionInRadians));
         return this;
+    };
+    /**** ****/
+    Graphic.prototype.forward = function (Distance) {
+        return this.draw(Distance);
+    };
+    /**** ****/
+    Graphic.prototype.backward = function (Distance) {
+        return this.draw(-1 * Distance);
     };
     /**** moveTo ****/
     Graphic.prototype.moveTo = function (x, y) {
@@ -471,6 +495,48 @@ var Graphic = /** @class */ (function () {
             this.currentPath += 'M ' + rounded(x) + ',' + rounded(y) + ' ';
         }
         return this;
+    };
+    /**** penup ****/
+    Graphic.prototype.penup = function () {
+        this.currentOpacity = 0;
+        return this;
+    };
+    /**** pendown ****/
+    Graphic.prototype.pendown = function () {
+        this.currentOpacity = 1;
+        return this;
+    };
+    /**** towards ****/
+    // TODO THIS IS PROBABLY BAD
+    Graphic.prototype.towards = function (x, y) {
+        console.log({ currentX: this.currentX, currentY: this.currentY, x: x, y: y });
+        var angleInRadians;
+        //if (this.currentX - x == 0) angleInRadians = 0;
+        angleInRadians = Math.atan2(-1 * this.currentY - y, this.currentX - x);
+        console.log({ angle: angleInRadians });
+        var angleInDegrees = angleInRadians * 180 / Math.PI;
+        return {
+            x: this.currentX,
+            y: this.currentY,
+            Direction: angleInDegrees
+        };
+    };
+    /**** goto ****/
+    Graphic.prototype.goto = function (x, y) {
+        expectFiniteNumber('x coordinate', x);
+        expectFiniteNumber('y coordinate', y);
+        this.currentX = x;
+        this.currentY = y;
+        return this;
+    };
+    /**** color ****/
+    Graphic.prototype.color = function (color) {
+        this.currentColor = color;
+        return this;
+    };
+    /*** speed  ****/
+    Graphic.prototype.speed = function (speed) {
+        return speed;
     };
     /**** draw ****/
     Graphic.prototype.draw = function (Distance) {
@@ -629,6 +695,11 @@ var Graphic = /** @class */ (function () {
     Graphic.prototype.currentPosition = function () {
         return { x: this.currentX, y: this.currentY };
     };
+    /*** position ****/
+    Graphic.prototype.position = function () {
+        var pos = this.currentPosition();
+        return [pos.x, pos.y];
+    };
     /**** positionAt ****/
     Graphic.prototype.positionAt = function (Position) {
         allowPosition('turtle position', Position);
@@ -659,6 +730,10 @@ var Graphic = /** @class */ (function () {
             this.moveTo(Alignment.x, Alignment.y);
         }
         return this;
+    };
+    /**** setheading */
+    Graphic.prototype.setheading = function (Alignment) {
+        this.alignAt(Alignment);
     };
     /**** Limits ****/
     Graphic.prototype.Limits = function () {

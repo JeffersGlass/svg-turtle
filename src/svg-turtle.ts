@@ -14,6 +14,7 @@
   export type TUR_Dimension = number                                     // dto.
   export type TUR_Angle     = number                                     // dto.
   export type TUR_Color     = string                                     // dto.
+  export type TUR_Opacity   = number                                     // opacity
 
   export const TUR_Lineatures = ['solid','dotted','dashed']
   export type  TUR_Lineature  = typeof TUR_Lineatures[number]
@@ -26,7 +27,7 @@
 
   export type TUR_PathOptionSet = {
     x?:TUR_Location, y?:TUR_Location, Direction?:TUR_Angle,
-    Width?:TUR_Dimension, Color?:TUR_Color,
+    Width?:TUR_Dimension, Color?:TUR_Color, Opacity?:TUR_Opacity,
     Lineature?:TUR_Lineature, Join?:TUR_Join, Cap?:TUR_Cap
   }
 
@@ -120,6 +121,7 @@
 
     private currentWidth:TUR_Dimension     = 1
     private currentColor:TUR_Color         = '#000000'
+    private currentOpacity:TUR_Opacity     = 1
     private currentLineature:TUR_Lineature = 'solid'
     private currentJoin:TUR_Join           = 'round'
     private currentCap:TUR_Cap             = 'round'
@@ -133,6 +135,7 @@
 
       if (this.currentWidth     == null) { this.currentWidth     = 1 }
       if (this.currentColor     == null) { this.currentColor     = '#000000' }
+      if (this.currentOpacity   == null) { this.currentOpacity   = 1}
       if (this.currentLineature == null) { this.currentLineature = 'solid' }
       if (this.currentJoin      == null) { this.currentJoin      = 'round' }
       if (this.currentCap       == null) { this.currentCap       = 'round' }
@@ -147,6 +150,7 @@
 
       this.currentWidth     = 1
       this.currentColor     = '#000000'
+      this.currentOpacity   = 1
       this.currentLineature = 'solid'
       this.currentJoin      = 'round'
       this.currentCap       = 'round'
@@ -171,6 +175,7 @@
         if (PathOptionSet.Direction != null) { this.currentDirection = PathOptionSet.Direction as TUR_Angle }
         if (PathOptionSet.Width     != null) { this.currentWidth     = PathOptionSet.Width as TUR_Dimension }
         if (PathOptionSet.Color     != null) { this.currentColor     = PathOptionSet.Color as TUR_Color }
+        if (PathOptionSet.Opacity   != null) { this.currentOpacity   = PathOptionSet.Opacity as TUR_Opacity }
         if (PathOptionSet.Lineature != null) { this.currentLineature = PathOptionSet.Lineature as TUR_Lineature }
         if (PathOptionSet.Join      != null) { this.currentJoin      = PathOptionSet.Join as TUR_Join }
         if (PathOptionSet.Cap       != null) { this.currentCap       = PathOptionSet.Cap as TUR_Cap }
@@ -184,6 +189,7 @@
       this.currentPath = '<path ' +
         'fill="none" ' +
         'stroke="'          + this.currentColor + '" ' +
+        'stroke-opacity="'  + this.currentOpacity + '" ' +
         'stroke-width="'    + this.currentWidth + '" ' +
         'stroke-linejoin="' + this.currentJoin  + '" ' +
         'stroke-linecap="'  + this.currentCap   + '" '
@@ -206,11 +212,10 @@
     }
 
   /**** turn ****/
-
     public turn (DirectionChange:TUR_Angle):Graphic {
       expectFiniteNumber('direction change',DirectionChange)
 
-      this.currentDirection += DirectionChange
+      this.currentDirection += -1 * DirectionChange
 
       return this
     }
@@ -230,10 +235,19 @@
     public turnLeft (DirectionChange:TUR_Angle):Graphic {
       expectFiniteNumber('direction change',DirectionChange)
 
-      this.currentDirection -= DirectionChange
+      this.currentDirection -= -1 * DirectionChange
 
       return this
     }
+
+  public foo(){
+      console.log("FOO")
+  }
+
+  /**** ****/
+  public left(DirectionChange:TUR_Angle):Graphic {
+    return this.turnLeft(-1 * DirectionChange)
+  }
 
   /**** turnRight ****/
 
@@ -244,6 +258,11 @@
 
       return this
     }
+
+  /*** ****/
+  public right (DirectionChange:TUR_Angle):Graphic {
+    return this.turnRight(-1 * DirectionChange);
+  }
 
   /**** move ****/
 
@@ -259,6 +278,15 @@
       return this
     }
 
+  /**** ****/
+    public forward (Distance:TUR_Location):Graphic {
+      return this.draw(Distance);
+    }
+
+  /**** ****/
+  public backward(Distance:TUR_Location):Graphic {
+    return this.draw(-1 * Distance);
+  }
   /**** moveTo ****/
 
     public moveTo (x:TUR_Location, y:TUR_Location):Graphic {
@@ -274,6 +302,62 @@
 
       return this
     }
+
+  /**** penup ****/
+
+  public penup():Graphic {
+    this.currentOpacity = 0;
+    return this;
+  }
+
+  /**** pendown ****/
+
+    public pendown():Graphic {
+      this.currentOpacity = 1;
+      return this;
+    }
+
+  /**** towards ****/
+  // TODO THIS IS PROBABLY BAD
+  public towards(x: number, y:number):TUR_Alignment{
+    console.log({currentX: this.currentX, currentY: this.currentY, x, y})
+    let angleInRadians;
+    //if (this.currentX - x == 0) angleInRadians = 0;
+    angleInRadians = Math.atan2(-1 * this.currentY - y,  this.currentX - x)
+    console.log({angle: angleInRadians})
+    
+    const angleInDegrees = angleInRadians * 180 / Math.PI;
+
+    return {
+      x: this.currentX,
+      y: this.currentY,
+      Direction: angleInDegrees
+
+    }
+  }
+
+  /**** goto ****/
+  public goto (x:TUR_Location, y:TUR_Location):Graphic {
+    expectFiniteNumber('x coordinate',x)
+    expectFiniteNumber('y coordinate',y)
+
+    this.currentX = x
+    this.currentY = y
+
+    return this
+
+  }
+
+  /**** color ****/
+  public color(color:string):Graphic{
+    this.currentColor = color;
+    return this;
+  }
+
+  /*** speed  ****/
+  public speed(speed:number):number{
+    return speed
+  }
 
   /**** draw ****/
 
@@ -523,6 +607,12 @@
       return { x:this.currentX, y:this.currentY }
     }
 
+  /*** position ****/
+    public position():Array<number>{
+      const pos = this.currentPosition() 
+      return [pos.x, pos.y];
+    }
+
   /**** positionAt ****/
 
     public positionAt (Position:TUR_Position):Graphic {
@@ -562,6 +652,11 @@
 
       return this
     }
+
+  /**** setheading */
+  public setheading (Alignment:TUR_Alignment) {
+    this.alignAt(Alignment);
+  }
 
   /**** Limits ****/
 
