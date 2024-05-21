@@ -117,6 +117,7 @@ export declare class Graphic {
     currentPosition(): TUR_Position;
     /*** position ****/
     position(): Array<number>;
+    pos(): Array<number>;
     /**** positionAt ****/
     positionAt(Position: TUR_Position): Graphic;
     /**** currentAlignment ****/
@@ -124,7 +125,9 @@ export declare class Graphic {
     /**** alignAt ****/
     alignAt(Alignment: TUR_Alignment): Graphic;
     /**** setheading */
-    setheading(Alignment: TUR_Alignment): void;
+    setheading(angle: number): this;
+    /**** heading */
+    heading(): number;
     /**** Limits ****/
     Limits(): {
         xMin: number;

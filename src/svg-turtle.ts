@@ -606,6 +606,10 @@
       return [pos.x, pos.y];
     }
 
+    public pos():Array<number>{
+      return this.position()
+    }
+
   /**** positionAt ****/
 
     public positionAt (Position:TUR_Position):Graphic {
@@ -647,8 +651,15 @@
     }
 
   /**** setheading */
-  public setheading (Alignment:TUR_Alignment) {
-    this.alignAt(Alignment);
+  public setheading (angle: number) {
+    const alignment = {x: this.currentX, y: this.currentY, Direction: angle}
+    this.alignAt(alignment);
+    return this
+  }
+
+  /**** heading */
+  public heading(): number {
+    return this.currentAlignment().Direction
   }
 
   /**** Limits ****/

@@ -696,6 +696,9 @@ var Graphic = /** @class */ (function () {
         var pos = this.currentPosition();
         return [pos.x, pos.y];
     };
+    Graphic.prototype.pos = function () {
+        return this.position();
+    };
     /**** positionAt ****/
     Graphic.prototype.positionAt = function (Position) {
         allowPosition('turtle position', Position);
@@ -728,8 +731,14 @@ var Graphic = /** @class */ (function () {
         return this;
     };
     /**** setheading */
-    Graphic.prototype.setheading = function (Alignment) {
-        this.alignAt(Alignment);
+    Graphic.prototype.setheading = function (angle) {
+        var alignment = { x: this.currentX, y: this.currentY, Direction: angle };
+        this.alignAt(alignment);
+        return this;
+    };
+    /**** heading */
+    Graphic.prototype.heading = function () {
+        return this.currentAlignment().Direction;
     };
     /**** Limits ****/
     Graphic.prototype.Limits = function () {
