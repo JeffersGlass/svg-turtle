@@ -512,7 +512,7 @@ var Graphic = /** @class */ (function () {
         console.log({ currentX: this.currentX, currentY: this.currentY, x: x, y: y });
         var angleInRadians;
         //if (this.currentX - x == 0) angleInRadians = 0;
-        angleInRadians = Math.atan2(-1 * this.currentY - y, this.currentX - x);
+        angleInRadians = Math.atan2(y - this.currentY, x - this.currentX);
         console.log({ angle: angleInRadians });
         var angleInDegrees = angleInRadians * 180 / Math.PI;
         return {
@@ -523,11 +523,7 @@ var Graphic = /** @class */ (function () {
     };
     /**** goto ****/
     Graphic.prototype.goto = function (x, y) {
-        expectFiniteNumber('x coordinate', x);
-        expectFiniteNumber('y coordinate', y);
-        this.currentX = x;
-        this.currentY = y;
-        return this;
+        return this.drawTo(x, y);
     };
     /**** color ****/
     Graphic.prototype.color = function (color) {
